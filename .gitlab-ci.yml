@@ -1,0 +1,58 @@
+stages:
+  - build
+  - style
+  - test
+  - deploy
+  - notify
+
+build_cat:
+  stage: build
+  script:
+    - cd src/cat
+    - make
+  artifacts:
+    paths:
+      - src/cat/s21_cat
+    expire_in: 30 days
+
+build_grep:
+  stage: build
+  script:
+    - cd src/grep
+    - make
+  artifacts:
+    paths:
+      - src/grep/s21_grep
+    expire_in: 30 days
+
+code_style_test:
+  stage: style
+  script:
+    - cd src/
+    - bash style_test.sh
+
+integration_test:
+  stage: test
+  script:
+    - cd src/
+    - bash integration_test.sh
+  needs:
+    - build_cat
+    - build_grep
+    - code_style_test
+
+deploy_stage:
+  stage: deploy
+  when: manual
+  script:
+    - cd src/
+    - bash deploy_script.sh
+
+notify_telegram:
+  stage: notify
+  script:
+    - cd src/
+    - bash telegram_notify.sh
+  when: on_success
+  needs:
+    - deploy_stage
